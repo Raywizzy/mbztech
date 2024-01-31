@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Flutterwave Payment</title>
+  <!-- Include Flutterwave library -->
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+</head>
+<body>
+
+<!-- Create a button to initiate payment -->
+<button onclick="initializePayment()">Pay Now</button>
+
+<script>
+  function initializePayment() {
+    FlutterwaveCheckout({
+      public_key: "FLWPUBK-d59ec02ce34f8ca98c9e5992ea4128ec-X",
+      tx_ref: "unique_transaction_reference", // Generate a unique reference for each transaction
+      amount: 1000, // Amount to be paid (in smallest currency unit, e.g., kobo for NGN)
+      currency: "NGN", // Currency code
+      customer: {
+        email: "customer@example.com", // Customer's email address
+        phone_number: "customer_phone_number", // Customer's phone number
+      },
+      callback: function (data) {
+        console.log(data); // Callback function after payment
+        if (data.status === "successful") {
+          // Redirect to the form after successful payment
+          window.location.href = "link_to_your_form.html";
+        } else {
+          alert("Payment was not successful");
+        }
+      },
+      onclose: function() {
+        console.log("Payment closed");
+      },
+      customizations: {
+        title: "Your Payment Title",
+        description: "Payment for XYZ",
+        logo: "URL_to_your_logo",
+      },
+    });
+  }
+</script>
+
+</body>
+</html>

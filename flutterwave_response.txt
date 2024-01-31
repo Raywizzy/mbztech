@@ -1,0 +1,9 @@
+stdClass Object
+(
+    [status] => error
+    [message] => Invalid amount
+    [data] => stdClass Object
+        (
+        )
+
+)
