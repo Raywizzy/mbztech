@@ -11,49 +11,49 @@ if ($conn->connect_error) {
 
 
 session_start();
-if(isset($_GET['order_id'])){
-    $order_id=$_GET['order_id'];
-    $select_data="Select * from `user_orders` where order_id=$order_id";
-    $result=mysqli_query($conn,$select_data);
-    $row_fetch=mysqli_fetch_assoc($result);
-    $invoice_number=$row_fetch['invoice_number'];
-    $amount_due=$row_fetch['amount_due'];
+if (isset($_GET['order_id'])) {
+    $order_id = $_GET['order_id'];
+    $select_data = "Select * from `user_orders` where order_id=$order_id";
+    $result = mysqli_query($conn, $select_data);
+    $row_fetch = mysqli_fetch_assoc($result);
+    $invoice_number = $row_fetch['invoice_number'];
+    $amount_due = $row_fetch['amount_due'];
 }
 
-if(isset($_POST['confirm_payment'])){
-    $invoice_number=$_POST['invoice_number'];
-    $amount=$_POST['amount'];
-    $payment_mode=$_POST['payment_mode'];
-    
+if (isset($_POST['confirm_payment'])) {
+    $invoice_number = $_POST['invoice_number'];
+    $amount = $_POST['amount'];
+    $payment_mode = $_POST['payment_mode'];
+
     if ($payment_mode === 'stripe') {
         require_once(__DIR__ . '/vendor/autoload.php');
-        
+
 
 
         // Set your Stripe API keys
         \Stripe\Stripe::setApiKey('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');
 
-try {
-    $paymentIntent = \Stripe\PaymentIntent::create([
-        'amount' => $amount * 100, // Amount in cents
-        'currency' => 'eur',
-        'description' => 'Payment for Invoice ' . $invoice_number,
-        // Add more parameters as needed
-    ]);
+        try {
+            $paymentIntent = \Stripe\PaymentIntent::create([
+                'amount' => (int)$amount * 100, // Amount in cents
+                'currency' => 'eur',
+                'description' => 'Payment for Invoice ' . $invoice_number,
+                // Add more parameters as needed
+            ]);
 
-    // Get the client_secret from PaymentIntent
-    $clientSecret = $paymentIntent->client_secret;
-    
-    // Redirect the user to the checkout page
+            // Get the client_secret from PaymentIntent
+            $clientSecret = $paymentIntent->client_secret;
 
-    header('Location: stripes_checkout.php?client_secret=' . $clientSecret);
-    exit();
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
-}
-    $error_message = "Error: Could not connect to Stripe. Please try again later.";
-    header("Location: https://mbztechnology.com/error-page.php?error_message=" . urlencode($error_message));
-    exit();
+            // Redirect the user to the checkout page
+
+            header('Location: stripes_checkout.php?client_secret=' . $clientSecret);
+            exit();
+        } catch (Exception $e) {
+            echo 'Error: ' . $e->getMessage();
+        }
+        // $error_message = "Error: Could not connect to Stripe. Please try again later.";
+        // header("Location: https://mbztechnology.com/error-page.php?error_message=" . urlencode($error_message));
+        // exit();
     } elseif ($payment_mode === 'flutterwave') {
         $curl = curl_init();
 
@@ -103,7 +103,7 @@ try {
             echo "Error: " . $err;
         } else {
             $responseData = json_decode($response);
-        
+
             // Check if the response contains expected data and the 'data' property exists
             if (isset($responseData->data) && isset($responseData->data->link)) {
                 $payment_url = $responseData->data->link;
@@ -112,10 +112,10 @@ try {
                 exit();
             } else {
                 $responseData = json_decode($response);
-            
+
                 // Log the entire response for inspection
                 file_put_contents('flutterwave_response.txt', print_r($responseData, true));
-            
+
                 // Display an error message
                 echo "Error: Invalid Flutterwave response. Check flutterwave_response.txt for details.";
             }
@@ -128,8 +128,8 @@ try {
         $error_message = "Error: Invalid payment mode selected.";
         header("Location: https://mbztechnology.com/error-page.php?error_message=" . urlencode($error_message));
         exit();
-   
     }
+    
     if ($payment_success) {
         // Insert payment details into user_payments table
         $insert_query = "INSERT INTO `user_payments` (order_id, invoice_number, amount, payment_mode) VALUES (?, ?, ?, ?)";
@@ -138,7 +138,7 @@ try {
         // Update order status
         $update_orders = "UPDATE `user_orders` SET order_status='Complete' WHERE order_id=?";
         // ... (prepare statement, bind param, execute)
-        
+
         // Provide success feedback to the user
         echo "<h4 class='text-center'>Successfully completed the payment</h4>";
         echo "<script>window.open('profile.php?my_orders','_self')</script>";
@@ -146,7 +146,6 @@ try {
         // Handle payment failure
         echo "Payment failed.";
     }
-
 }
 
 
@@ -157,6 +156,7 @@ try {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -185,50 +185,51 @@ try {
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="assets/css/style.css">
     <!-- responsive Stylesheet -->
-    <link rel="stylesheet" href="assets/css/responsive.css">   
+    <link rel="stylesheet" href="assets/css/responsive.css">
 
 
-<style>
-  select {
-      height: 50px;
-      width: 100%;
-      outline: none;
-      font-size: 16px;
-      border-radius: 4px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      transition: border-color 0.3s ease;
+    <style>
+        select {
+            height: 50px;
+            width: 100%;
+            outline: none;
+            font-size: 16px;
+            border-radius: 4px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            transition: border-color 0.3s ease;
 
-  }
-</style>
+        }
+    </style>
 </head>
+
 <body>
-<!-- preloader area start -->
-<div class="preloader" id="preloader">
-    <div class="preloader-inner">
-        <div class="spinner">
-            <div class="dot1"></div>
-            <div class="dot2"></div>
+    <!-- preloader area start -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-inner">
+            <div class="spinner">
+                <div class="dot1"></div>
+                <div class="dot2"></div>
+            </div>
         </div>
     </div>
-</div>
-<!-- preloader area end -->
+    <!-- preloader area end -->
 
-<div class="breadcrumb-area" style="background-image:url(assets/img/page-title-bg.png);">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <div class="breadcrumb-inner">
-                    <h1 class="page-title">Confirm Payment</h1>
-                    <ul class="page-list">
-                       
-                        
-                    </ul>
+    <div class="breadcrumb-area" style="background-image:url(assets/img/page-title-bg.png);">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="breadcrumb-inner">
+                        <h1 class="page-title">Confirm Payment</h1>
+                        <ul class="page-list">
+
+
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
     <div class="container my-5">
         <form action="" method="post">
@@ -238,31 +239,32 @@ try {
             </div>
             <div class="form-outline mt-4 text-center">
                 <label for="amount">Amount</label>
-                <input type="text" class="form-control w-50 m-auto" name="amount" value="€<?php echo $amount_due ?>" readonly>
+                <input type="hidden" class="form-control w-50 m-auto" name="amount" value="<?php echo $amount_due ?>" readonly>
+                <input type="text" class="form-control w-50 m-auto" value="€<?php echo $amount_due ?>" readonly>
             </div>
             <div class="form-outline mt-4 text-center">
-    <label for="amount">Payment Mode</label><br>
-    <select name="payment_mode" class="form-select w-50 m-auto">
-        <option>Select Payment Mode</option>
-        <!-- <option value="paypal">Paypal</option> -->
-        <option value="stripe">Stripe</option>
-        <option value="flutterwave">Flutterwave</option>
-        <!-- <option value="globalpay">Global Pay</option> -->
-    </select>
-</div>
-            
+                <label for="amount">Payment Mode</label><br>
+                <select name="payment_mode" class="form-select w-50 m-auto">
+                    <option>Select Payment Mode</option>
+                    <!-- <option value="paypal">Paypal</option> -->
+                    <option value="stripe">Stripe</option>
+                    <option value="flutterwave">Flutterwave</option>
+                    <!-- <option value="globalpay">Global Pay</option> -->
+                </select>
+            </div>
+
             <div class="col-12 mt-5 mb-5 text-center">
-                <input type="submit" value="Pay" name="confirm_payment"  class="btn btn-green" >
+                <input type="submit" value="Pay" name="confirm_payment" class="btn btn-green">
             </div>
         </form>
     </div>
 
 
     <!-- back to top area start -->
-<div class="back-to-top">
-    <span class="back-top"><i class="fa fa-angle-up"></i></span>
-</div>
-<!-- back to top area end -->
+    <div class="back-to-top">
+        <span class="back-top"><i class="fa fa-angle-up"></i></span>
+    </div>
+    <!-- back to top area end -->
 
 
     <!-- jquery -->
@@ -293,8 +295,9 @@ try {
     <script src="assets/js/worldmap-libs.js"></script>
     <script src="assets/js/worldmap-topojson.js"></script>
     <script src="assets/js/mediaelement.min.js"></script>
-     <!-- main js -->
+    <!-- main js -->
     <script src="assets/js/main.js"></script>
-    
+
 </body>
+
 </html>
